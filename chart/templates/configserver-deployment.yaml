@@ -74,9 +74,60 @@ spec:
           volumeMounts:
             {{- include "common.volumeMount" .Values.global.volumes.pki | nindent 12 }}
             {{- include "common.volumeMount" .Values.global.volumes.config | nindent 12 }}
+            - name: logs-dir
+              mountPath: "{{- $cfg.Values.filebeat.logMountDirectory }}"
+      - name: filebeat
+        image: "{{ $cfg.Values.filebeat.imageRepo }}:{{ $cfg.Values.filebeat.imageTag }}"
+        securityContext:
+          {{- toYaml .Values.filebeat.securityContext | nindent 12 }}
+        volumeMounts:
+          - name: logs-dir
+            mountPath: {{ $cfg.Values.filebeat.logMountDirectory }}
+          - name: elk-config
+            mountPath: /usr/share/filebeat/filebeat.yml
+            subPath: filebeat.yml
+          - name: filebeat-config
+            mountPath: "/usr/share/filebeat/{{ $cfg.Values.filebeat.pipelineDestDir }}"
+        env:
+          - name: LOCAL_HOSTNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodName
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: LOGSTASH_HOST
+            value: "{{ $cfg.Values.filebeat.logstashHost }}"
+          - name: LOG_LOCATION_REGEX
+            value: {{ printf "%s/%s" $cfg.Values.filebeat.logMountDirectory $cfg.Values.filebeat.logRegex }}
+      {{ if $cfg.Values.logstash.enabled -}}
+      - name: logstash
+        image: "{{ $cfg.Values.logstash.imageRepo }}:{{ $cfg.Values.logstash.imageTag}} "
+        securityContext:
+          { { - toYaml .Values.filebeat.securityContext | nindent 12 } }
+        volumeMounts:
+          - name: elk-config
+            mountPath: /usr/share/filebeat/logstash.yml
+            subPath: logstash.yml
+          - name: logstash-config
+            mountPath: "/usr/share/logstash/{{ $cfg.Values.logstash.pipelineDestDir }}"
       volumes:
         {{- include "common.volume" $.Values.global.volumes.pki | nindent 8 }}
         {{- include "common.volume" $.Values.global.volumes.config | nindent 8 }}
+        - name: logs-dir
+          emptyDir: {}
+        - name: elk-config
+          configMap:
+            name: {{ template "ingest.name" $cfg }}-elk
+        - name: filebeat-config
+          configMap:
+            name: {{ template "ingest.name" $cfg }}-filebeat
+        {{- if $cfg.Values.logstash.enabled }}
+        - name: logstash-config
+          configMap:
+            name: { { template "ingest.name" $cfg } }-logstash
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
