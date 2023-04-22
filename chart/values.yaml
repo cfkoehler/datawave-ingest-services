@@ -93,31 +93,3 @@ configuration:
 messaging:
   # TODO enable and configuration if not using an external rabbitmq service
   enabled: false
-
-# Configure Filebeat Sidecar
-filebeat:
-  imageRepo: docker.elastic.co/beats/filebeat
-  imageTag: 8.5.1
-  # For Logstash Sidecar
-  logstashHost: "localhost:5044"
-  # For logstash Deployment in monitoring namespace
-  #logstashHost: "logstash.monitoring:5044"
-  logMountDirectory: "/opt/ingest/logs" #TODO: Get application to log here
-  logRegex: "ingest-service-*/ingest-service.log" #TODO: check on log filename
-  pipelineDestDir: "conf.d"
-  # Filebeat must run as filebeat user
-  securityContext:
-    runAsNonRoot: true
-    runsAsUser: 1000
-    runAsGroup: 0
-
-logstash:
-  enabled: true
-  imageRepo: docker.elastic.co/logstash/logstash
-  imageTag: 8.5.1
-  pipelineDestDir: "pipeline"
-  # Logstash must run as filebeat user
-  securityContext:
-    runAsNonRoot: true
-    runsAsUser: 1000
-    runAsGroup: 0
