@@ -219,7 +219,7 @@ configuration:
   image:
     repository: datawave/config-service
     pullPolicy: IfNotPresent
-    tag: 1.6-SNAPSHOT
+    tag: 1.7-SNAPSHOT
 messaging:
   enabled: true
   name: ingest-rabbitmq

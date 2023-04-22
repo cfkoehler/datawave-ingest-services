@@ -3,8 +3,6 @@
   paths:
     - "$LOG_LOCATION_REGEX"
 
-  include_lines: [ 'INFO', 'ERROR', 'FATAL', 'Exception' ]
-
   document_type: darkarmy
   close_inactive: 1h
   ignore_older: 48h
@@ -13,7 +11,7 @@
     app.podname: "${POD_NAME}"
     beats.hostname: "${POD_NAME}"
     app.hostname: "${LOCAL_HOSTNAME}"
-    service: datawave
+    service: datawave-ingest
     logFile: ingestLog
     instance: ingest
   fields_under_root: true

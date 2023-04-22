@@ -161,18 +161,14 @@ spec:
             {{- range $.Values.volumes }}
               {{- include "common.volumeMount" . | nindent 12 }}
             {{- end }}
-            - name: logs-dir
-              mountPath: "{{- $.Values.filebeat.logMountDirectory }}"
           resources:
             {{- toYaml $.Values.resources | nindent 12 }}
         - name: filebeat
           image: "{{ $.Values.filebeat.imageRepo }}:{{ $.Values.filebeat.imageTag }}"
           securityContext:
-            runAsNonRoot: true
-            runsAsUser: 1000
-            runAsGroup: 0
+            {{- toYaml $.Values.filebeat.securityContext | nindent 12 }}
           volumeMounts:
-            - name: logs-dir
+            - name: logs
               mountPath: {{ $.Values.filebeat.logMountDirectory }}
             - name: elk-config
               mountPath: /usr/share/filebeat/filebeat.yml
@@ -183,7 +179,7 @@ spec:
             - name: LOCAL_HOSTNAME
               valueFrom:
                 fieldRef:
-                  fieldPath: spec.nodName
+                  fieldPath: spec.nodeName
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -194,11 +190,9 @@ spec:
               value: {{ printf "%s/%s" $.Values.filebeat.logMountDirectory $.Values.filebeat.logRegex }}
         {{ if $.Values.logstash.enabled -}}
         - name: logstash
-          image: "{{ $.Values.logstash.imageRepo }}:{{ $.Values.logstash.imageTag}} "
+          image: "{{ $.Values.logstash.imageRepo }}:{{ $.Values.logstash.imageTag}}"
           securityContext:
-            runAsNonRoot: true
-            runsAsUser: 1000
-            runAsGroup: 0
+            {{- toYaml $.Values.logstash.securityContext | nindent 12 }}
           volumeMounts:
             - name: elk-config
               mountPath: /usr/share/filebeat/logstash.yml
@@ -227,19 +221,17 @@ spec:
           hostPath:
             path: {{ $.Values.global.volumes.logs.source.path }}
             type: DirectoryOrCreate
-        - name: logs-dir
-          emptyDir: {}
         - name: elk-config
           configMap:
-            name: {{ template "ingest.name" . }}-elk
-          - name: filebeat-config
-        configMap:
-          name: {{ template "ingest.name" . }}-filebeat
-          {{- if $.Values.logstash.enabled }}
-          - name: logstash-config
-        configMap:
-          name: { { template "ingest.name" . } }-logstash
-          {{- end }}
+            name: {{ template "ingest.name" $ }}-elk
+        - name: filebeat-config
+          configMap:
+            name: {{ template "ingest.name" $ }}-filebeat
+        {{- if $.Values.logstash.enabled }}
+        - name: logstash-config
+          configMap:
+            name: {{ template "ingest.name" $ }}-logstash
+        {{- end }}
       {{- with $.Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

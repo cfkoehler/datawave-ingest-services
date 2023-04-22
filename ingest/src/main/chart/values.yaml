@@ -142,9 +142,17 @@ filebeat:
   logMountDirectory: "/logs"
   logRegex: "ingest*.log"
   pipelineDestDir: "conf.d"
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
 
 logstash:
   enabled: true
   imageRepo: docker.elastic.co/logstash/logstash
   imageTag: 8.5.1
   pipelineDestDir: "pipeline"
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
