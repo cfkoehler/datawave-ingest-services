@@ -44,8 +44,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: 'maven'
-      - name: Get Current Version
-        run: mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q  -DforceStdout > $current_version
       - name: Update Maven Version for release
         run: mvn -V -B -e versions:set -DnewVersion=${{github.event.inputs.release_version}} -DprocessAllModules -DgenerateBackupPoms=false
       - name: Update helm App version
